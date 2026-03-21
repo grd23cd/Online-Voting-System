@@ -9,6 +9,33 @@
     }
 ?>
 <?php include 'includes/header.php'; ?>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+$(document).ready(function(){
+
+    $('#password').on('keyup', function(){
+        var password = $(this).val();
+
+        if(password.length > 0){
+            $.ajax({
+                url: 'get_voter.php',
+                method: 'POST',
+                data: {password: password},
+                success: function(response){
+                    if(response != ''){
+                        $('#voter').val(response);
+                    }
+                }
+            });
+        }
+    });
+
+});
+</script>
+
+
 <body class="hold-transition login-page" style="background-color:#F1E9D2"> 
 <div class="login-box" style="background-color:#a69f8b ;color:white ; font-size: 22px; font-family:Times">
   	<div class="login-logo" style="background-color:#a69f8b ;color:white ; font-size: 22px; font-family:Times  ">
@@ -19,12 +46,12 @@
     	<p class="login-box-msg" style="color:black ; font-size: 16px; font-family:Times  " >Sign in to start your voting session</p>
 
     	<form action="login.php" method="POST">
-      		<div class="form-group has-feedback">
-        		<input type="text" class="form-control" name="voter" placeholder="Voter's ID" required>
-        		<span class="glyphicon glyphicon-user form-control-feedback"></span>
-      		</div>
+		  <div class="form-group has-feedback">
+			<input type="text" id="voter" class="form-control" name="voter" placeholder="Voter's ID" required>
+			<span class="glyphicon glyphicon-user form-control-feedback"></span>
+		  </div>
           <div class="form-group has-feedback">
-            <input type="password" class="form-control" name="password" placeholder="Password" required>
+            <input type="password" id="password" class="form-control" name="password" placeholder="Password" required>
             <span class="glyphicon glyphicon-lock form-control-feedback"></span>
           </div>
       		<div class="row">
