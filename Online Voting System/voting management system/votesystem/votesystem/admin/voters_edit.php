@@ -5,20 +5,18 @@
 		$id = $_POST['id'];
 		$firstname = $_POST['firstname'];
 		$lastname = $_POST['lastname'];
-		$password = $_POST['password'];
+		$password = $_POST['password']; // plain text passbook
 
-		$sql = "SELECT * FROM voters WHERE id = $id";
-		$query = $conn->query($sql);
-		$row = $query->fetch_assoc();
+		// recompute voters_id as LASTNAME, FIRSTNAME
+		$voter = strtoupper($lastname . ', ' . $firstname);
 
-		if($password == $row['password']){
-			$password = $row['password'];
-		}
-		else{
-			$password = password_hash($password, PASSWORD_DEFAULT);
-		}
+		$sql = "UPDATE voters 
+		        SET voters_id = '$voter',
+		            firstname = '$firstname', 
+		            lastname = '$lastname', 
+		            password = '$password' 
+		        WHERE id = '$id'";
 
-		$sql = "UPDATE voters SET firstname = '$firstname', lastname = '$lastname', password = '$password' WHERE id = '$id'";
 		if($conn->query($sql)){
 			$_SESSION['success'] = 'Voter updated successfully';
 		}
@@ -31,5 +29,4 @@
 	}
 
 	header('location: voters.php');
-
 ?>
