@@ -80,7 +80,7 @@ CREATE TABLE `positions` (
 
 CREATE TABLE `voters` (
   `id` int(11) NOT NULL,
-  `voters_id` varchar(15) NOT NULL,
+  `voters_id` varchar(60) NOT NULL,
   `password` varchar(60) NOT NULL,
   `firstname` varchar(30) NOT NULL,
   `lastname` varchar(30) NOT NULL,
