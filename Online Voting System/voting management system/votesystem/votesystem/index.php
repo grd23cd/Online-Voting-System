@@ -15,6 +15,7 @@
 <script>
 $(document).ready(function(){
 
+    // AUTO-FILL voter ID based on password (your existing feature)
     $('#password').on('keyup', function(){
         var password = $(this).val();
 
@@ -32,35 +33,61 @@ $(document).ready(function(){
         }
     });
 
+    // ✅ LOAD saved precinct on page load
+    var savedPrecinct = localStorage.getItem('selected_precinct');
+    if(savedPrecinct){
+        $('#precinct').val(savedPrecinct);
+    }
+
+    // ✅ SAVE precinct when changed
+    $('#precinct').on('change', function(){
+        var selected = $(this).val();
+        localStorage.setItem('selected_precinct', selected);
+    });
+
 });
 </script>
 
 
 <body class="hold-transition login-page" style="background-color:#F1E9D2"> 
 <div class="login-box" style="background-color:#a69f8b ;color:white ; font-size: 22px; font-family:Times">
-  	<div class="login-logo" style="background-color:#a69f8b ;color:white ; font-size: 22px; font-family:Times  ">
+  	<div class="login-logo" style="background-color:#a69f8b ;color:white ; font-size: 22px; font-family:Times">
   		<b> Online Voting System</b>
   	</div>
   
-  	<div class="login-box-body" style="background-color:#a69f8b ;color:white ; font-size: 22px; font-family:Times" >
-    	<p class="login-box-msg" style="color:black ; font-size: 16px; font-family:Times  " >Sign in to start your voting session</p>
+  	<div class="login-box-body" style="background-color:#a69f8b ;color:white ; font-size: 22px; font-family:Times">
+    	<p class="login-box-msg" style="color:black ; font-size: 16px; font-family:Times">Sign in to start your voting session</p>
 
     	<form action="login.php" method="POST">
 		  <div class="form-group has-feedback">
 			<input type="text" id="voter" class="form-control" name="voter" placeholder="Voter's ID" required>
 			<span class="glyphicon glyphicon-user form-control-feedback"></span>
 		  </div>
+
           <div class="form-group has-feedback">
             <input type="password" id="password" class="form-control" name="password" placeholder="Password" required>
             <span class="glyphicon glyphicon-lock form-control-feedback"></span>
           </div>
+
+		  <div class="form-group">
+			<select class="form-control" name="precinct" id="precinct" required>
+				<option value="">Select Precinct</option>
+				<option value="Precinct 1">Precinct 1</option>
+				<option value="Precinct 2">Precinct 2</option>
+				<option value="Precinct 3">Precinct 3</option>
+			</select>
+		  </div>
+
       		<div class="row">
     			<div class="col-xs-4">
-          			<button type="submit" class="btn btn-primary btn-block btn-curve" style="background-color: #4682B4 ;color:black ; font-size: 12px; font-family:Times" name="login"><i class="fa fa-sign-in"></i> Sign In</button>
+          			<button type="submit" class="btn btn-primary btn-block btn-curve" style="background-color: #4682B4 ;color:black ; font-size: 12px; font-family:Times" name="login">
+                        <i class="fa fa-sign-in"></i> Sign In
+                    </button>
         		</div>
       		</div>
     	</form>
   	</div>
+
   	<?php
   		if(isset($_SESSION['error'])){
   			echo "
