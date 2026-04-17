@@ -6,21 +6,35 @@ if (isset($_POST['login'])) {
 
     $voter = $_POST['voter'];
     $password = $_POST['password'];
+    $precinct = $_POST['precinct'];
 
-    // Use prepared statement to prevent SQL injection
+    // validate precinct
+    if (empty($precinct)) {
+        $_SESSION['error'] = 'Please select your precinct';
+        header('location: index.php');
+        exit();
+    }
+
     $stmt = $conn->prepare("SELECT * FROM voters WHERE voters_id = ?");
     $stmt->bind_param("s", $voter);
     $stmt->execute();
     $query = $stmt->get_result();
 
     if ($query->num_rows < 1) {
+
         $_SESSION['error'] = 'Cannot find voter with the ID';
+
     } else {
+
         $row = $query->fetch_assoc();
 
-        // Case-insensitive password comparison
         if (strcasecmp($password, $row['password']) === 0) {
+
             $_SESSION['voter'] = $row['id'];
+
+            // FORCE INTEGER PRECINCT
+            $_SESSION['precinct'] = (int)$precinct;
+
         } else {
             $_SESSION['error'] = 'Incorrect password';
         }

@@ -33,13 +33,13 @@ $(document).ready(function(){
         }
     });
 
-    // ✅ LOAD saved precinct on page load
+    // LOAD saved precinct on page load
     var savedPrecinct = localStorage.getItem('selected_precinct');
     if(savedPrecinct){
         $('#precinct').val(savedPrecinct);
     }
 
-    // ✅ SAVE precinct when changed
+    // SAVE precinct when changed
     $('#precinct').on('change', function(){
         var selected = $(this).val();
         localStorage.setItem('selected_precinct', selected);
@@ -72,9 +72,9 @@ $(document).ready(function(){
 		  <div class="form-group">
 			<select class="form-control" name="precinct" id="precinct" required>
 				<option value="">Select Precinct</option>
-				<option value="Precinct 1">Precinct 1</option>
-				<option value="Precinct 2">Precinct 2</option>
-				<option value="Precinct 3">Precinct 3</option>
+				<option value="1">Precinct 1</option>
+				<option value="2">Precinct 2</option>
+				<option value="3">Precinct 3</option>
 			</select>
 		  </div>
 
