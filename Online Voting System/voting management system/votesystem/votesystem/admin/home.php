@@ -136,7 +136,10 @@
         <div class="col-xs-12" >
           <h3> <b>VOTES TALLY
             <span class="pull-right">
-            
+              <a href="backup.php" class="btn btn-primary btn-sm btn-curve" style="margin-left:5px;background-color:#1E90FF;color:black;font-size:12px;font-family:Times">
+                <span class="glyphicon glyphicon-floppy-disk"></span> Backup DB
+              </a>
+
               <a href="print.php" class="btn btn-success btn-sm btn-curve" style="background-color: #2E8B57 ;color:black ; font-size: 12px; font-family:Times "><span class="glyphicon glyphicon-print"></span> Print</a>
             </span>
          </b> </h3>

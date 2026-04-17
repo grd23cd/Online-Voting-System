@@ -1,91 +1,324 @@
 <?php include 'includes/session.php'; ?>
 <?php include 'includes/header.php'; ?>
+
+<style>
+body, table, th, td, h1, h3, .box {
+  font-family: Times !important;
+}
+
+.content-wrapper {
+  background-color: #F1E9D2 !important;
+  color: black;
+}
+
+.box {
+  background-color: #d8d1bd !important;
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  .print-section, .print-section * {
+    visibility: visible;
+  }
+
+  .print-section {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  tr {
+    page-break-inside: avoid;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+}
+</style>
+
 <body class="hold-transition skin-blue sidebar-mini">
 <div class="wrapper">
 
-  <?php include 'includes/navbar.php'; ?>
-  <?php include 'includes/menubar.php'; ?>
+<?php include 'includes/navbar.php'; ?>
+<?php include 'includes/menubar.php'; ?>
 
-  <!-- Content Wrapper. Contains page content -->
-  <div class="content-wrapper" style="background-color:#F1E9D2 ;color:black ; font-size: 17px; font-family:Times ">
-    <!-- Content Header (Page header) -->
-    <section class="content-header" style= "color:black ; font-size: 17px; font-family:Times">
-      <h1>
-        VOTES PER PRECINCT
-      </h1>
-      <ol class="breadcrumb" style="color:black ; font-size: 17px; font-family:Times">
-        <li><a href="#"><i class="fa fa-dashboard" ></i> Home</a></li>
-        <li class="active" style="color:black ; font-size: 17px; font-family:Times" >Dashboard</li>
-      </ol>
-    </section>
-    <!-- Main content -->
-    <section class="content">
-      <?php
-        if(isset($_SESSION['error'])){
+<div class="content-wrapper">
+
+<section class="content-header">
+  <h1><b>Per Precinct</b></h1>
+</section>
+
+<section class="content">
+
+<?php
+
+$limit = 1;
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+if ($page < 1) $page = 1;
+
+$total_query = $conn->query("SELECT COUNT(DISTINCT precinct_number) as total FROM votes");
+$total_row = $total_query->fetch_assoc();
+$total_precincts = $total_row['total'];
+
+$total_pages = ceil($total_precincts / $limit);
+$offset = ($page - 1) * $limit;
+
+$precinct_query = $conn->query("
+  SELECT DISTINCT precinct_number 
+  FROM votes 
+  ORDER BY precinct_number ASC
+  LIMIT $offset, $limit
+");
+
+?>
+
+<div class="no-print" style="text-align:center; margin-bottom:15px;">
+
+  <?php if($page > 1): ?>
+    <a class="btn btn-default btn-sm" href="?page=<?php echo $page-1; ?>">Prev</a>
+  <?php endif; ?>
+
+  <?php for($i = 1; $i <= $total_pages; $i++): ?>
+    <a class="btn btn-sm <?php echo ($i == $page) ? 'btn-primary' : 'btn-default'; ?>"
+       href="?page=<?php echo $i; ?>">
+      <?php echo $i; ?>
+    </a>
+  <?php endfor; ?>
+
+  <?php if($page < $total_pages): ?>
+    <a class="btn btn-default btn-sm" href="?page=<?php echo $page+1; ?>">Next</a>
+  <?php endif; ?>
+
+</div>
+
+<?php while($p = $precinct_query->fetch_assoc()):
+$precinct = $p['precinct_number'];
+?>
+
+<div class="box print-section" data-precinct="<?php echo $precinct; ?>">
+
+  <div class="box-header with-border" style="display:flex; align-items:center;">
+
+    <h3 style="margin:0;">Precinct <?php echo $precinct; ?></h3>
+
+    <a href="javascript:void(0)"
+      class="btn btn-success btn-sm btn-curve"
+      style="margin-left:auto; background-color:#2E8B57;color:black;font-size:12px;font-family:Times"
+      onclick="printSection(this)">
+      <span class="glyphicon glyphicon-print"></span>
+      Print
+    </a>
+
+  </div>
+
+  <div class="box-body">
+
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Position</th>
+          <th>Candidate</th>
+          <th>Voter</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <?php
+        $sql = "
+          SELECT *,
+            candidates.firstname AS canfirst,
+            candidates.lastname AS canlast,
+            voters.firstname AS votfirst,
+            voters.lastname AS votlast
+          FROM votes
+          LEFT JOIN positions ON positions.id = votes.position_id
+          LEFT JOIN candidates ON candidates.id = votes.candidate_id
+          LEFT JOIN voters ON voters.id = votes.voters_id
+          WHERE votes.precinct_number = '$precinct'
+          ORDER BY positions.priority ASC
+        ";
+
+        $query = $conn->query($sql);
+
+        while($row = $query->fetch_assoc()){
           echo "
-            <div class='alert alert-danger alert-dismissible'>
-              <button type='button' class='close' data-dismiss='alert' aria-hidden='true'>&times;</button>
-              <h4><i class='icon fa fa-warning'></i> Error!</h4>
-              ".$_SESSION['error']."
-            </div>
+            <tr>
+              <td>".$row['description']."</td>
+              <td>".$row['canfirst'].' '.$row['canlast']."</td>
+              <td>".$row['votfirst'].' '.$row['votlast']."</td>
+            </tr>
           ";
-          unset($_SESSION['error']);
         }
-        if(isset($_SESSION['success'])){
-          echo "
-            <div class='alert alert-success alert-dismissible'>
-              <button type='button' class='close' data-dismiss='alert' aria-hidden='true'>&times;</button>
-              <h4><i class='icon fa fa-check'></i> Success!</h4>
-              ".$_SESSION['success']."
-            </div>
+        ?>
+      </tbody>
+    </table>
+
+    <!-- FULL PRINT DATA (not affected by DataTables) -->
+    <div class="print-only" style="display:none;">
+      <table>
+        <thead>
+          <tr>
+            <th>Position</th>
+            <th>Candidate</th>
+            <th>Voter</th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php
+          $sql2 = "
+            SELECT *,
+              candidates.firstname AS canfirst,
+              candidates.lastname AS canlast,
+              voters.firstname AS votfirst,
+              voters.lastname AS votlast
+            FROM votes
+            LEFT JOIN positions ON positions.id = votes.position_id
+            LEFT JOIN candidates ON candidates.id = votes.candidate_id
+            LEFT JOIN voters ON voters.id = votes.voters_id
+            WHERE votes.precinct_number = '$precinct'
+            ORDER BY positions.priority ASC
           ";
-          unset($_SESSION['success']);
-        }
-      ?>
-      <div class="row">
-        <div class="col-xs-12">
-          <div class="box"style="background-color: #d8d1bd">
-            <div class="box-header with-border"style="background-color: #d8d1bd">
-              <a href="#reset" data-toggle="modal" class="btn btn-danger btn-sm btn-curve"  style="background-color: #ff8e88;color:black ; font-size: 12px; font-family:Times"><i class="fa fa-refresh"></i> Reset</a>
-              <span class="pull-right"> 
-              <a href="print.php" class="btn btn-success btn-sm btn-curve" style="background-color: #2E8B57 ;color:black ; font-size: 12px; font-family:Times "><span class="glyphicon glyphicon-print"></span> Print</a>
-              </span>
-            </div>
-            <div class="box-body">
-              <table id="example1" class="table ">
-                <thead>
-                  <th class="hidden"></th>
+
+          $query2 = $conn->query($sql2);
+
+          while($row = $query2->fetch_assoc()){
+            echo "
+              <tr>
+                <td>".$row['description']."</td>
+                <td>".$row['canfirst'].' '.$row['canlast']."</td>
+                <td>".$row['votfirst'].' '.$row['votlast']."</td>
+              </tr>
+            ";
+          }
+          ?>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<?php endwhile; ?>
+
+</section>
+</div>
+
+<?php include 'includes/footer.php'; ?>
+</div>
+
+<?php include 'includes/scripts.php'; ?>
+
+<script>
+$(function () {
+  $('.table').each(function () {
+    if ($.fn.DataTable.isDataTable(this)) {
+      $(this).DataTable().destroy();
+    }
+
+    $(this).DataTable({
+      paging: true,
+      lengthChange: true,
+      searching: true,
+      ordering: true,
+      info: true,
+      autoWidth: false,
+      order: [[0, 'asc']]
+    });
+  });
+});
+</script>
+
+<script>
+function printSection(btn) {
+
+  let section = btn.closest('.print-section');
+  let precinct = section.getAttribute("data-precinct");
+
+  fetch("fetch_votes_print.php?precinct=" + precinct)
+    .then(res => res.json())
+    .then(data => {
+
+      let html = `
+        <html>
+          <head>
+            <title>Precinct Report</title>
+            <style>
+              body { font-family: Times; padding:20px; }
+              h3 { text-align:center; margin-bottom:15px; }
+              table { width:100%; border-collapse: collapse; }
+              table, th, td { border:1px solid black; padding:8px; }
+              th { background:#d8d1bd; }
+            </style>
+          </head>
+          <body>
+            <h3>Precinct ${precinct}</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
                   <th>Position</th>
                   <th>Candidate</th>
                   <th>Voter</th>
-                </thead>
-                <tbody>
-                  <?php
-                    $sql = "SELECT *, candidates.firstname AS canfirst, candidates.lastname AS canlast, voters.firstname AS votfirst, voters.lastname AS votlast FROM votes LEFT JOIN positions ON positions.id=votes.position_id LEFT JOIN candidates ON candidates.id=votes.candidate_id LEFT JOIN voters ON voters.id=votes.voters_id ORDER BY positions.priority ASC";
-                    $query = $conn->query($sql);
-                    while($row = $query->fetch_assoc()){
-                      echo "
-                        <tr style='color:black ; font-size: 15px; font-family:Times'>
-                          <td class='hidden'></td>
-                          <td>".$row['description']."</td>
-                          <td>".$row['canfirst'].' '.$row['canlast']."</td>
-                          <td>".$row['votfirst'].' '.$row['votlast']."</td>
-                        </tr>
-                      ";
-                    }
-                  ?>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>   
-  </div>
-    
-  <?php include 'includes/footer.php'; ?>
-  <?php include 'includes/votes_modal.php'; ?>
-</div>
-<?php include 'includes/scripts.php'; ?>
+                </tr>
+              </thead>
+              <tbody>
+      `;
+
+      data.forEach((row, index) => {
+        html += `
+          <tr>
+            <td>${index + 1}</td>
+            <td>${row.position}</td>
+            <td>${row.candidate}</td>
+            <td>${row.voter}</td>
+          </tr>
+        `;
+      });
+
+      html += `
+              </tbody>
+            </table>
+          </body>
+        </html>
+      `;
+
+      let iframe = document.createElement('iframe');
+      iframe.style.position = 'fixed';
+      iframe.style.right = '0';
+      iframe.style.bottom = '0';
+      iframe.style.width = '0';
+      iframe.style.height = '0';
+      iframe.style.border = '0';
+
+      document.body.appendChild(iframe);
+
+      iframe.contentDocument.open();
+      iframe.contentDocument.write(html);
+      iframe.contentDocument.close();
+
+      iframe.onload = function () {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+        document.body.removeChild(iframe);
+      };
+
+    });
+}
+</script>
+
 </body>
 </html>

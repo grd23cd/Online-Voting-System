@@ -75,6 +75,13 @@ $(document).ready(function(){
 				<option value="1">Precinct 1</option>
 				<option value="2">Precinct 2</option>
 				<option value="3">Precinct 3</option>
+				<option value="4">Precinct 4</option>
+				<option value="5">Precinct 5</option>
+				<option value="6">Precinct 6</option>
+				<option value="7">Precinct 7</option>
+				<option value="8">Precinct 8</option>
+				<option value="9">Precinct 9</option>
+				<option value="10">Precinct 10</option>
 			</select>
 		  </div>
 
