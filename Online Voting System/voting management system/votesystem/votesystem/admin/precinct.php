@@ -78,8 +78,8 @@ $total_pages = ceil($total_precincts / $limit);
 $offset = ($page - 1) * $limit;
 
 $precinct_query = $conn->query("
-  SELECT DISTINCT precinct_number 
-  FROM votes 
+  SELECT DISTINCT precinct_number
+  FROM votes
   ORDER BY precinct_number ASC
   LIMIT $offset, $limit
 ");
@@ -130,26 +130,34 @@ $precinct = $p['precinct_number'];
     <table class="table">
       <thead>
         <tr>
-          <th>Position</th>
-          <th>Candidate</th>
           <th>Voter</th>
+          <th>Votes Cast</th>
         </tr>
       </thead>
 
       <tbody>
         <?php
         $sql = "
-          SELECT *,
-            candidates.firstname AS canfirst,
-            candidates.lastname AS canlast,
-            voters.firstname AS votfirst,
-            voters.lastname AS votlast
+          SELECT
+            CONCAT(voters.firstname, ' ', voters.lastname) AS voter,
+            GROUP_CONCAT(
+              CONCAT(
+                positions.description,
+                ' - ',
+                candidates.firstname,
+                ' ',
+                candidates.lastname
+              )
+              ORDER BY positions.priority ASC
+              SEPARATOR ', '
+            ) AS votes_cast
           FROM votes
           LEFT JOIN positions ON positions.id = votes.position_id
           LEFT JOIN candidates ON candidates.id = votes.candidate_id
           LEFT JOIN voters ON voters.id = votes.voters_id
           WHERE votes.precinct_number = '$precinct'
-          ORDER BY positions.priority ASC
+          GROUP BY votes.voters_id
+          ORDER BY voter ASC
         ";
 
         $query = $conn->query($sql);
@@ -157,57 +165,14 @@ $precinct = $p['precinct_number'];
         while($row = $query->fetch_assoc()){
           echo "
             <tr>
-              <td>".$row['description']."</td>
-              <td>".$row['canfirst'].' '.$row['canlast']."</td>
-              <td>".$row['votfirst'].' '.$row['votlast']."</td>
+              <td>".$row['voter']."</td>
+              <td>".$row['votes_cast']."</td>
             </tr>
           ";
         }
         ?>
       </tbody>
     </table>
-
-    <!-- FULL PRINT DATA (not affected by DataTables) -->
-    <div class="print-only" style="display:none;">
-      <table>
-        <thead>
-          <tr>
-            <th>Position</th>
-            <th>Candidate</th>
-            <th>Voter</th>
-          </tr>
-        </thead>
-        <tbody>
-          <?php
-          $sql2 = "
-            SELECT *,
-              candidates.firstname AS canfirst,
-              candidates.lastname AS canlast,
-              voters.firstname AS votfirst,
-              voters.lastname AS votlast
-            FROM votes
-            LEFT JOIN positions ON positions.id = votes.position_id
-            LEFT JOIN candidates ON candidates.id = votes.candidate_id
-            LEFT JOIN voters ON voters.id = votes.voters_id
-            WHERE votes.precinct_number = '$precinct'
-            ORDER BY positions.priority ASC
-          ";
-
-          $query2 = $conn->query($sql2);
-
-          while($row = $query2->fetch_assoc()){
-            echo "
-              <tr>
-                <td>".$row['description']."</td>
-                <td>".$row['canfirst'].' '.$row['canlast']."</td>
-                <td>".$row['votfirst'].' '.$row['votlast']."</td>
-              </tr>
-            ";
-          }
-          ?>
-        </tbody>
-      </table>
-    </div>
 
   </div>
 </div>
@@ -260,8 +225,14 @@ function printSection(btn) {
               body { font-family: Times; padding:20px; }
               h3 { text-align:center; margin-bottom:15px; }
               table { width:100%; border-collapse: collapse; }
-              table, th, td { border:1px solid black; padding:8px; }
-              th { background:#d8d1bd; }
+              table, th, td {
+                border:1px solid black;
+                padding:8px;
+                vertical-align: top;
+              }
+              th {
+                background:#d8d1bd;
+              }
             </style>
           </head>
           <body>
@@ -270,9 +241,8 @@ function printSection(btn) {
               <thead>
                 <tr>
                   <th>#</th>
-                  <th>Position</th>
-                  <th>Candidate</th>
                   <th>Voter</th>
+                  <th>Votes Cast</th>
                 </tr>
               </thead>
               <tbody>
@@ -282,9 +252,8 @@ function printSection(btn) {
         html += `
           <tr>
             <td>${index + 1}</td>
-            <td>${row.position}</td>
-            <td>${row.candidate}</td>
             <td>${row.voter}</td>
+            <td>${row.votes_cast}</td>
           </tr>
         `;
       });
