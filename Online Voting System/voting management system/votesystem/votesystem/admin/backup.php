@@ -1,66 +1,132 @@
 <?php
-include 'includes/session.php';
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
-$DB_HOST = "localhost";
-$DB_USER = "root";
-$DB_PASS = "";
-$DB_NAME = "votesystem";
+// include '../includes/session.php';
 
-$conn = new mysqli($DB_HOST, $DB_USER, $DB_PASS, $DB_NAME);
+ob_start();
 
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+date_default_timezone_set('Asia/Manila');
+
+$timestamp = date('Y-m-d_H-i-s');
+$backupDir = __DIR__ . '/../backups';
+
+if (!is_dir($backupDir)) {
+    mkdir($backupDir, 0777, true);
 }
 
-$conn->query("SET NAMES 'utf8'");
+$dbName   = "votesystem";
+$dbUser   = "root";
+$dbPass   = "";
+$dbHost   = "localhost";
 
-$tables = [];
-$result = $conn->query("SHOW TABLES");
+$sqlFile  = $backupDir . "/votesystem_$timestamp.sql";
+$zipName  = "votesystem_backup_$timestamp.zip";
+$zipPath  = $backupDir . "/" . $zipName;
 
-while ($row = $result->fetch_array()) {
-    $tables[] = $row[0];
+// ─── 1. Dump the database ───────────────────────────────────────────────────
+$mysqldump = "C:\\xampp\\mysql\\bin\\mysqldump.exe";
+
+$command = escapeshellarg($mysqldump)
+    . " -h " . escapeshellarg($dbHost)
+    . " -u " . escapeshellarg($dbUser)
+    . " " . escapeshellarg($dbName)
+    . " -r " . escapeshellarg($sqlFile)
+    . " 2>&1";
+
+exec($command, $output, $result);
+
+if ($result !== 0) {
+    die("mysqldump failed (exit code $result):<br><pre>" . implode("\n", $output) . "</pre>");
 }
 
-$output = "";
+if (!file_exists($sqlFile) || filesize($sqlFile) === 0) {
+    die("SQL file was not created or is empty.");
+}
 
-foreach ($tables as $table) {
+// ─── 2. Create ZIP ──────────────────────────────────────────────────────────
+$zip = new ZipArchive();
+if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== TRUE) {
+    die("Cannot create ZIP file.");
+}
 
-    $res = $conn->query("SELECT * FROM $table");
-    $fields_count = $res->field_count;
+// Add the SQL dump first
+$zip->addFile($sqlFile, "database/votesystem.sql");
 
-    $output .= "DROP TABLE IF EXISTS `$table`;\n";
+// ─── 3. Add all project files ───────────────────────────────────────────────
+$projectRoot = realpath(__DIR__ . '/../'); // votesystem/ folder
 
-    $create = $conn->query("SHOW CREATE TABLE $table");
-    $row2 = $create->fetch_array();
-    $output .= $row2[1] . ";\n\n";
+// Folders/files to SKIP (backups folder itself, temp files, etc.)
+$skipPaths = [
+    realpath($backupDir),           // skip the backups folder
+    realpath($zipPath),             // skip the zip being created
+    realpath($sqlFile),             // skip the sql file
+];
 
-    while ($row = $res->fetch_array()) {
-        $output .= "INSERT INTO `$table` VALUES(";
+$iterator = new RecursiveIteratorIterator(
+    new RecursiveDirectoryIterator(
+        $projectRoot,
+        RecursiveDirectoryIterator::SKIP_DOTS
+    ),
+    RecursiveIteratorIterator::LEAVES_ONLY
+);
 
-        for ($i = 0; $i < $fields_count; $i++) {
+foreach ($iterator as $file) {
+    $filePath = $file->getRealPath();
 
-            $value = isset($row[$i]) ? $conn->real_escape_string($row[$i]) : "";
-
-            $output .= '"' . $value . '"';
-
-            if ($i < ($fields_count - 1)) {
-                $output .= ",";
-            }
+    // Skip the backups directory and its contents
+    $skip = false;
+    foreach ($skipPaths as $skipPath) {
+        if ($skipPath && strpos($filePath, $skipPath) === 0) {
+            $skip = true;
+            break;
         }
-
-        $output .= ");\n";
     }
+    if ($skip) continue;
 
-    $output .= "\n\n";
+    // Skip if not readable
+    if (!is_readable($filePath)) continue;
+
+    // Path inside the ZIP: files/votesystem/...
+    $relativePath = 'files/' . substr($filePath, strlen($projectRoot) + 1);
+    // Normalize slashes for ZIP
+    $relativePath = str_replace('\\', '/', $relativePath);
+
+    $zip->addFile($filePath, $relativePath);
 }
 
-$filename = "votesystem-backup-" . date("Y-m-d_H-i-s") . ".sql";
+$zip->close();
 
-header('Content-Type: application/sql');
-header('Content-Disposition: attachment; filename=' . $filename);
-header('Pragma: no-cache');
-header('Expires: 0');
+if (!file_exists($zipPath) || filesize($zipPath) === 0) {
+    die("ZIP was not created or is empty.");
+}
 
-echo $output;
+// Clean up the loose SQL file
+unlink($sqlFile);
+
+// ─── 4. Stream the ZIP download ─────────────────────────────────────────────
+
+// Increase limits for large files
+set_time_limit(300);        // 5 minutes
+ini_set('memory_limit', '512M');
+
+ob_end_clean();
+
+header('Content-Type: application/zip');
+header('Content-Disposition: attachment; filename="' . $zipName . '"');
+header('Content-Length: ' . filesize($zipPath));
+header('Cache-Control: no-cache, must-revalidate');
+header('Pragma: public');
+
+// Stream in chunks to avoid memory issues with large files
+$handle = fopen($zipPath, 'rb');
+while (!feof($handle)) {
+    echo fread($handle, 8192);
+    flush();
+}
+fclose($handle);
+
+// Optional: delete zip from server after download
+// unlink($zipPath);
+
 exit;
-?>
