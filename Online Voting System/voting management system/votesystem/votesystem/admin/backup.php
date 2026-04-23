@@ -4,27 +4,27 @@ ini_set('display_errors', 1);
 
 // include '../includes/session.php';
 
+set_time_limit(300);
+ini_set('memory_limit', '512M');
+
 ob_start();
 
 date_default_timezone_set('Asia/Manila');
 
 $timestamp = date('Y-m-d_H-i-s');
-$backupDir = __DIR__ . '/../backups';
+$dbName    = "votesystem";
+$dbUser    = "root";
+$dbPass    = "";
+$dbHost    = "localhost";
 
-if (!is_dir($backupDir)) {
-    mkdir($backupDir, 0777, true);
-}
+$zipName   = "votesystem_backup_$timestamp.zip";
 
-$dbName   = "votesystem";
-$dbUser   = "root";
-$dbPass   = "";
-$dbHost   = "localhost";
+// ─── Use system temp folder instead of creating backups folder ───────────────
+$tempDir   = sys_get_temp_dir();                        // e.g. C:\xampp\tmp
+$sqlFile   = $tempDir . "/votesystem_$timestamp.sql";
+$zipPath   = $tempDir . "/" . $zipName;
 
-$sqlFile  = $backupDir . "/votesystem_$timestamp.sql";
-$zipName  = "votesystem_backup_$timestamp.zip";
-$zipPath  = $backupDir . "/" . $zipName;
-
-// ─── 1. Dump the database ───────────────────────────────────────────────────
+// ─── 1. Dump the database ────────────────────────────────────────────────────
 $mysqldump = "C:\\xampp\\mysql\\bin\\mysqldump.exe";
 
 $command = escapeshellarg($mysqldump)
@@ -44,24 +44,17 @@ if (!file_exists($sqlFile) || filesize($sqlFile) === 0) {
     die("SQL file was not created or is empty.");
 }
 
-// ─── 2. Create ZIP ──────────────────────────────────────────────────────────
+// ─── 2. Create ZIP in temp folder ────────────────────────────────────────────
 $zip = new ZipArchive();
 if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== TRUE) {
     die("Cannot create ZIP file.");
 }
 
-// Add the SQL dump first
+// Add SQL dump
 $zip->addFile($sqlFile, "database/votesystem.sql");
 
-// ─── 3. Add all project files ───────────────────────────────────────────────
-$projectRoot = realpath(__DIR__ . '/../'); // votesystem/ folder
-
-// Folders/files to SKIP (backups folder itself, temp files, etc.)
-$skipPaths = [
-    realpath($backupDir),           // skip the backups folder
-    realpath($zipPath),             // skip the zip being created
-    realpath($sqlFile),             // skip the sql file
-];
+// ─── 3. Add all project files ─────────────────────────────────────────────────
+$projectRoot = realpath(__DIR__ . '/../');  // votesystem/ folder
 
 $iterator = new RecursiveIteratorIterator(
     new RecursiveDirectoryIterator(
@@ -74,22 +67,13 @@ $iterator = new RecursiveIteratorIterator(
 foreach ($iterator as $file) {
     $filePath = $file->getRealPath();
 
-    // Skip the backups directory and its contents
-    $skip = false;
-    foreach ($skipPaths as $skipPath) {
-        if ($skipPath && strpos($filePath, $skipPath) === 0) {
-            $skip = true;
-            break;
-        }
-    }
-    if ($skip) continue;
-
-    // Skip if not readable
+    // Skip unreadable files
     if (!is_readable($filePath)) continue;
 
-    // Path inside the ZIP: files/votesystem/...
+    // Skip the temp sql and zip files if they somehow appear
+    if ($filePath === $sqlFile || $filePath === $zipPath) continue;
+
     $relativePath = 'files/' . substr($filePath, strlen($projectRoot) + 1);
-    // Normalize slashes for ZIP
     $relativePath = str_replace('\\', '/', $relativePath);
 
     $zip->addFile($filePath, $relativePath);
@@ -97,19 +81,14 @@ foreach ($iterator as $file) {
 
 $zip->close();
 
+// Delete the temp SQL file immediately
+if (file_exists($sqlFile)) unlink($sqlFile);
+
 if (!file_exists($zipPath) || filesize($zipPath) === 0) {
     die("ZIP was not created or is empty.");
 }
 
-// Clean up the loose SQL file
-unlink($sqlFile);
-
-// ─── 4. Stream the ZIP download ─────────────────────────────────────────────
-
-// Increase limits for large files
-set_time_limit(300);        // 5 minutes
-ini_set('memory_limit', '512M');
-
+// ─── 4. Stream download then delete ZIP ──────────────────────────────────────
 ob_end_clean();
 
 header('Content-Type: application/zip');
@@ -118,7 +97,7 @@ header('Content-Length: ' . filesize($zipPath));
 header('Cache-Control: no-cache, must-revalidate');
 header('Pragma: public');
 
-// Stream in chunks to avoid memory issues with large files
+// Stream in chunks
 $handle = fopen($zipPath, 'rb');
 while (!feof($handle)) {
     echo fread($handle, 8192);
@@ -126,7 +105,7 @@ while (!feof($handle)) {
 }
 fclose($handle);
 
-// Optional: delete zip from server after download
-// unlink($zipPath);
+// Delete ZIP from temp folder after download — leaves no trace anywhere
+if (file_exists($zipPath)) unlink($zipPath);
 
 exit;
