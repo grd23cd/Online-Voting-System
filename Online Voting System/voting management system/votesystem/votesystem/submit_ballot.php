@@ -6,27 +6,25 @@ if(isset($_POST['vote'])){
 
     $_SESSION['post'] = $_POST;
 
-    // SAFETY CHECK
     if(!isset($_SESSION['precinct'])){
         $_SESSION['error'][] = 'Precinct not set. Please login again.';
         header('location: index.php');
         exit();
     }
 
-    // FINAL PRECINCT VALUE (INTEGER ONLY)
     $precinct = (int)$_SESSION['precinct'];
 
     $sql = "SELECT * FROM positions";
     $query = $conn->query($sql);
 
     $error = false;
-    $sql_array = array();
 
     while($row = $query->fetch_assoc()){
 
         $position = slugify($row['description']);
         $pos_id = $row['id'];
 
+        // IF voter selected candidates
         if(isset($_POST[$position])){
 
             // MULTIPLE VOTE
@@ -40,9 +38,10 @@ if(isset($_POST['vote'])){
                 else{
                     foreach($_POST[$position] as $values){
 
-                        $sql_array[] =
-                        "INSERT INTO votes (voters_id, candidate_id, position_id, precinct_number)
-                         VALUES ('".$voter['id']."', '$values', '$pos_id', '$precinct')";
+                        $conn->query(
+                            "INSERT INTO votes (voters_id, candidate_id, position_id, precinct_number)
+                             VALUES ('".$voter['id']."', '$values', '$pos_id', '$precinct')"
+                        );
                     }
                 }
 
@@ -52,17 +51,27 @@ if(isset($_POST['vote'])){
 
                 $candidate = $_POST[$position];
 
-                $sql_array[] =
-                "INSERT INTO votes (voters_id, candidate_id, position_id, precinct_number)
-                 VALUES ('".$voter['id']."', '$candidate', '$pos_id', '$precinct')";
+                $conn->query(
+                    "INSERT INTO votes (voters_id, candidate_id, position_id, precinct_number)
+                     VALUES ('".$voter['id']."', '$candidate', '$pos_id', '$precinct')"
+                );
             }
+
+        }
+        // ❗ NO VOTE → BLANK ENTRY
+        else{
+
+            $conn->query(
+                "INSERT INTO votes (voters_id, candidate_id, position_id, precinct_number)
+                 VALUES ('".$voter['id']."', NULL, '$pos_id', '$precinct')"
+            );
         }
     }
 
     if(!$error){
-        foreach($sql_array as $sql_row){
-            $conn->query($sql_row);
-        }
+
+        // MARK AS VOTED
+        $conn->query("UPDATE voters SET voted = 1 WHERE id = '".$voter['id']."'");
 
         unset($_SESSION['post']);
         $_SESSION['success'] = 'Ballot Submitted Successfully';

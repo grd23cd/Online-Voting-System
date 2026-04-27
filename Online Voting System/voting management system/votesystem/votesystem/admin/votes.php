@@ -58,17 +58,34 @@
                 </thead>
                 <tbody>
                   <?php
-                    $sql = "SELECT *, candidates.firstname AS canfirst, candidates.lastname AS canlast, voters.firstname AS votfirst, voters.lastname AS votlast FROM votes LEFT JOIN positions ON positions.id=votes.position_id LEFT JOIN candidates ON candidates.id=votes.candidate_id LEFT JOIN voters ON voters.id=votes.voters_id ORDER BY positions.priority ASC";
+                    $sql = "
+                    SELECT 
+                      positions.description,
+                      voters.firstname AS votfirst,
+                      voters.lastname AS votlast,
+
+                      CASE 
+                        WHEN votes.candidate_id IS NULL THEN 'BLANK VOTE'
+                        ELSE CONCAT(candidates.firstname, ' ', candidates.lastname)
+                      END AS candidate_name
+
+                    FROM votes
+                    LEFT JOIN positions ON positions.id = votes.position_id
+                    LEFT JOIN candidates ON candidates.id = votes.candidate_id
+                    LEFT JOIN voters ON voters.id = votes.voters_id
+                    ORDER BY positions.priority ASC
+                    ";
+
                     $query = $conn->query($sql);
                     while($row = $query->fetch_assoc()){
-                      echo "
-                        <tr style='color:black ; font-size: 15px; font-family:Times'>
-                          <td class='hidden'></td>
-                          <td>".$row['description']."</td>
-                          <td>".$row['canfirst'].' '.$row['canlast']."</td>
-                          <td>".$row['votfirst'].' '.$row['votlast']."</td>
-                        </tr>
-                      ";
+                        echo "
+                            <tr style='color:black; font-size:15px; font-family:Times'>
+                                <td class='hidden'></td>
+                                <td>".$row['description']."</td>
+                                <td>".$row['candidate_name']."</td>
+                                <td>".$row['votfirst'].' '.$row['votlast']."</td>
+                            </tr>
+                        ";
                     }
                   ?>
                 </tbody>

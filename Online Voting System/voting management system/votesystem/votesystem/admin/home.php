@@ -115,7 +115,7 @@
           <div class="small-box bg-red">
           <div class="inner" style="background-color: #778899 ;color:black ; font-size:15px; font-family:Times">
               <?php
-                $sql = "SELECT * FROM votes GROUP BY voters_id";
+                $sql = "SELECT * FROM voters WHERE voted = 1";
                 $query = $conn->query($sql);
 
                 echo "<h3>".$query->num_rows."</h3>";
