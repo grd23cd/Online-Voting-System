@@ -65,7 +65,7 @@
                       voters.lastname AS votlast,
 
                       CASE 
-                        WHEN votes.candidate_id IS NULL THEN 'BLANK VOTE'
+                        WHEN votes.candidate_id IS NULL THEN 'ABSTAINED'
                         ELSE CONCAT(candidates.firstname, ' ', candidates.lastname)
                       END AS candidate_name
 
