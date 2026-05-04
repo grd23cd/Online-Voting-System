@@ -7,12 +7,12 @@ body, table, th, td, h1, h3, .box {
 }
 
 .content-wrapper {
-  background-color: #F1E9D2 !important;
+  background-color: #fefefe !important;
   color: black;
 }
 
 .box {
-  background-color: #d8d1bd !important;
+  background-color: #62daf5 !important;
 }
 
 @media print {
@@ -112,17 +112,15 @@ $precinct = $p['precinct_number'];
 <div class="box print-section" data-precinct="<?php echo $precinct; ?>">
 
   <div class="box-header with-border" style="display:flex; align-items:center;">
-
     <h3 style="margin:0;">Precinct <?php echo $precinct; ?></h3>
 
     <a href="javascript:void(0)"
       class="btn btn-success btn-sm btn-curve"
-      style="margin-left:auto; background-color:#2E8B57;color:black;font-size:12px;font-family:Times"
+      style="margin-left:auto; background-color: #ff8e88;color:black;font-size:12px;font-family:Times"
       onclick="printSection(this)">
       <span class="glyphicon glyphicon-print"></span>
       Print
     </a>
-
   </div>
 
   <div class="box-body">
@@ -136,32 +134,39 @@ $precinct = $p['precinct_number'];
       </thead>
 
       <tbody>
-        <?php
-        $sql = "
-          SELECT
-            CONCAT(voters.firstname, ' ', voters.lastname) AS voter,
+      <?php
+
+      $sql = "
+        SELECT
+          CONCAT(v.firstname, ' ', v.lastname) AS voter,
+          COALESCE(
             GROUP_CONCAT(
               CONCAT(
-                positions.description,
+                p.description,
                 ' - ',
-                candidates.firstname,
+                c.firstname,
                 ' ',
-                candidates.lastname
+                c.lastname
               )
-              ORDER BY positions.priority ASC
+              ORDER BY p.priority ASC
               SEPARATOR ', '
-            ) AS votes_cast
-          FROM votes
-          LEFT JOIN positions ON positions.id = votes.position_id
-          LEFT JOIN candidates ON candidates.id = votes.candidate_id
-          LEFT JOIN voters ON voters.id = votes.voters_id
-          WHERE votes.precinct_number = '$precinct'
-          GROUP BY votes.voters_id
-          ORDER BY voter ASC
-        ";
+            ),
+            'Abstained'
+          ) AS votes_cast
+        FROM votes vt
+        LEFT JOIN voters v ON v.id = vt.voters_id
+        LEFT JOIN positions p ON p.id = vt.position_id
+        LEFT JOIN candidates c ON c.id = vt.candidate_id
+        WHERE vt.precinct_number = '$precinct'
+        GROUP BY vt.voters_id, v.firstname, v.lastname
+        ORDER BY voter ASC
+      ";
 
-        $query = $conn->query($sql);
+      $query = $conn->query($sql);
 
+      if(!$query){
+        echo "<tr><td colspan='2' style='color:red;'>SQL Error: ".$conn->error."</td></tr>";
+      } else {
         while($row = $query->fetch_assoc()){
           echo "
             <tr>
@@ -170,7 +175,9 @@ $precinct = $p['precinct_number'];
             </tr>
           ";
         }
-        ?>
+      }
+
+      ?>
       </tbody>
     </table>
 
@@ -231,7 +238,7 @@ function printSection(btn) {
                 vertical-align: top;
               }
               th {
-                background:#d8d1bd;
+                background: #d8d1bd;
               }
             </style>
           </head>
@@ -267,12 +274,8 @@ function printSection(btn) {
 
       let iframe = document.createElement('iframe');
       iframe.style.position = 'fixed';
-      iframe.style.right = '0';
-      iframe.style.bottom = '0';
       iframe.style.width = '0';
       iframe.style.height = '0';
-      iframe.style.border = '0';
-
       document.body.appendChild(iframe);
 
       iframe.contentDocument.open();
