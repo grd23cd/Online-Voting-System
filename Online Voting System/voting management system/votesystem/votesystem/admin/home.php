@@ -140,7 +140,11 @@
                 style="margin-left:5px;background-color:#1E90FF;color:black;font-size:12px;font-family:Times">
                 <span class="glyphicon glyphicon-floppy-disk"></span> Backup Database and System
               </a>
-              <a href="print.php" class="btn btn-success btn-sm btn-curve" style="background-color: #2E8B57 ;color:black ; font-size: 12px; font-family:Times "><span class="glyphicon glyphicon-print"></span> Print</a>
+              <a href="print_login.php"
+                class="btn btn-success btn-sm btn-curve"
+                style="background-color:#2E8B57; color:black; font-size:12px; font-family:Times">
+                  <span class="glyphicon glyphicon-print"></span> Print
+              </a>
             </span>
          </b> </h3>
         </div>

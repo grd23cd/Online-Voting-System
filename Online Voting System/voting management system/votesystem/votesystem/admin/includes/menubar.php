@@ -24,6 +24,7 @@
       <li class=""><a href="precinct.php"><i class="fa fa-print"></i> <span>Per Precinct</span></a></li>
       <li class="header" style="background-color:#28272D ;color:white ; font-size: 12px; font-family:Times">SETTINGS</li>
       <li class=""><a href="ballot.php"><i class="fa fa-file-text"></i> <span>Ballot Position</span></a></li>
+      <li class=""><a href="print_accounts.php"><i class="fa fa-user-secret"></i> <span>Authorized Print Users</span></a></li>
       <li class=""><a href="#config" data-toggle="modal"><i class="fa fa-cogs"></i> <span>Election Title</span></a></li>
     </ul>
   </section>

@@ -1,6 +1,14 @@
 <?php
 include 'includes/session.php';
-include 'includes/conn.php';
+
+if(
+    !isset($_SESSION['print_auth']) ||
+    !isset($_SESSION['print_user1']) ||
+    !isset($_SESSION['print_user2'])
+){
+    header('location: print_login.php');
+    exit();
+}
 ?>
 
 <!DOCTYPE html>
@@ -68,6 +76,14 @@ th {
 <body>
 
 <h1>Official Election Report</h1>
+
+<p style="text-align:center; margin-bottom:25px;">
+    <strong>Authorized User 1:</strong>
+    <?php echo $_SESSION['print_user1']; ?>
+    <br>
+    <strong>Authorized User 2:</strong>
+    <?php echo $_SESSION['print_user2']; ?>
+</p>
 
 <button onclick="window.open(window.location.href, '_blank', 'width=1000,height=800')">
     Print / Save as PDF
@@ -206,9 +222,19 @@ while ($position = $positions->fetch_assoc()) {
 ?>
 
 <script>
-window.onload = function () {
-    window.print();
-};
+
+    window.onload = function(){
+
+        window.print();
+
+        setTimeout(function(){
+
+            window.location = "print_logout.php";
+
+        },1000);
+
+    };
+
 </script>
 
 </body>
