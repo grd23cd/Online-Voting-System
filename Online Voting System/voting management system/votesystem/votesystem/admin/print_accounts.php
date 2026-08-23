@@ -190,7 +190,8 @@ function getRow(id){
 
             $('#edit_username').val(response.username);
 
-            $('#edit_password').val(response.password);
+            $('#edit_current_password').val('');
+            $('#edit_password').val('');
 
             $('.fullname').html(response.fullname);
 

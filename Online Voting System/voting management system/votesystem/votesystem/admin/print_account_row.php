@@ -7,7 +7,7 @@ if(isset($_POST['id'])){
 
     $id = $_POST['id'];
 
-    $sql = "SELECT * FROM print_accounts WHERE id = '$id'";
+    $sql = "SELECT id, fullname, username FROM print_accounts WHERE id = '$id'";
     $query = $conn->query($sql);
 
     if($query->num_rows > 0){

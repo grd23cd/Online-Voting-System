@@ -36,6 +36,7 @@
       }
       .title{
         font-size: 50px;
+        color: black;
       }
       #candidate_list{
         margin-top:20px;

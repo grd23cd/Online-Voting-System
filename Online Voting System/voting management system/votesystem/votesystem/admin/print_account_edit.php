@@ -6,48 +6,74 @@ if(isset($_POST['edit'])){
     $id = $_POST['id'];
     $fullname = mysqli_real_escape_string($conn, $_POST['fullname']);
     $username = mysqli_real_escape_string($conn, $_POST['username']);
-    $password = trim($_POST['password']);
+    $current_password = trim($_POST['current_password']);
+    $new_password = trim($_POST['password']);
 
-    // Check if another account already uses this username
-    $check = "SELECT * FROM print_accounts
-              WHERE username = '$username'
-              AND id != '$id'";
+    // Fetch the account so we can check the current password
+    $check_id = "SELECT * FROM print_accounts WHERE id = '$id'";
+    $result = $conn->query($check_id);
 
-    $result = $conn->query($check);
+    if($result->num_rows == 0){
 
-    if($result->num_rows > 0){
-
-        $_SESSION['error'] = 'Username already exists.';
+        $_SESSION['error'] = 'Account not found.';
 
     }
     else{
 
-        // Keep current password if left blank
-        if(empty($password)){
+        $account = $result->fetch_assoc();
 
-            $sql = "UPDATE print_accounts
-                    SET fullname = '$fullname',
-                        username = '$username'
-                    WHERE id = '$id'";
+        // Verify current password matches what's on file
+        if($current_password !== $account['password']){
+
+            $_SESSION['error'] = 'Current password is incorrect.';
 
         }
         else{
 
-            $password = mysqli_real_escape_string($conn, $_POST['password']);
+            // Check if another account already uses this username
+            $check_username = "SELECT * FROM print_accounts
+                                WHERE username = '$username'
+                                AND id != '$id'";
 
-            $sql = "UPDATE print_accounts
-                    SET fullname = '$fullname',
-                        username = '$username',
-                        password = '$password'
-                    WHERE id = '$id'";
+            $username_check = $conn->query($check_username);
 
-        }
+            if($username_check->num_rows > 0){
 
-        if($conn->query($sql)){
-            $_SESSION['success'] = 'Authorized user updated successfully.';
-        }
-        else{
-            $_SESSION['error'] = $conn->error;
+                $_SESSION['error'] = 'Username already exists.';
+
+            }
+            else{
+
+                // Keep current password if new password left blank
+                if(empty($new_password)){
+
+                    $sql = "UPDATE print_accounts
+                            SET fullname = '$fullname',
+                                username = '$username'
+                            WHERE id = '$id'";
+
+                }
+                else{
+
+                    $new_password = mysqli_real_escape_string($conn, $new_password);
+
+                    $sql = "UPDATE print_accounts
+                            SET fullname = '$fullname',
+                                username = '$username',
+                                password = '$new_password'
+                            WHERE id = '$id'";
+
+                }
+
+                if($conn->query($sql)){
+                    $_SESSION['success'] = 'Authorized user updated successfully.';
+                }
+                else{
+                    $_SESSION['error'] = $conn->error;
+                }
+
+            }
+
         }
 
     }

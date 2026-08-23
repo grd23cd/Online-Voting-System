@@ -46,19 +46,33 @@
               <h4 class="modal-title"> <b>Your Votes </b></h4>
             </div>
             <div class="modal-body">
+              <div class="votelist-wrapper">
               <?php
                 $id = $voter['id'];
-                $sql = "SELECT *, candidates.firstname AS canfirst, candidates.lastname AS canlast FROM votes LEFT JOIN candidates ON candidates.id=votes.candidate_id LEFT JOIN positions ON positions.id=votes.position_id WHERE voters_id = '$id'  ORDER BY positions.priority ASC";
+                $sql = "
+                  SELECT 
+                    positions.description,
+                    CASE 
+                      WHEN votes.candidate_id IS NULL THEN 'ABSTAINED'
+                      ELSE CONCAT(candidates.firstname, ' ', candidates.lastname)
+                    END AS candidate_name
+                  FROM votes 
+                  LEFT JOIN candidates ON candidates.id = votes.candidate_id 
+                  LEFT JOIN positions ON positions.id = votes.position_id 
+                  WHERE voters_id = '$id' 
+                  ORDER BY positions.priority ASC
+                ";
                 $query = $conn->query($sql);
                 while($row = $query->fetch_assoc()){
                   echo "
-                    <div class='row votelist'>
-                      <span class='col-sm-4'><span class='pull-right'><b>".$row['description']." :</b></span></span> 
-                      <span class='col-sm-8'>".$row['canfirst']." ".$row['canlast']."</span>
+                    <div class='votelist'>
+                      <span class='vote-label'>".$row['description']." :</span>
+                      <span class='vote-value'>".$row['candidate_name']."</span>
                     </div>
                   ";
                 }
               ?>
+              </div>
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-default btn-curve pull-left" style='background-color:  #FFDEAD  ;color:black ; font-size: 12px; font-family:Times' data-dismiss="modal"><i class="fa fa-close"></i> Close</button>
@@ -66,3 +80,52 @@
         </div>
     </div>
 </div>
+
+<style>
+/* View Ballot / your votes - flexbox layout instead of Bootstrap col-sm spans,
+   which don't stack properly on mobile because they're inline <span> elements. */
+.votelist-wrapper{
+	display:flex;
+	flex-direction:column;
+	gap:6px;
+}
+.votelist{
+	display:flex;
+	flex-wrap:wrap;
+	align-items:baseline;
+	gap:6px 10px;
+	padding:6px 0;
+	border-bottom:1px solid rgba(0,0,0,0.15);
+}
+.votelist .vote-label{
+	flex:1 1 160px;
+	font-weight:bold;
+	text-align:right;
+}
+.votelist .vote-value{
+	flex:2 1 180px;
+	text-align:left;
+}
+
+/* Stack label above value on narrow screens instead of squeezing side by side */
+@media (max-width:480px){
+	.votelist{
+		flex-direction:column;
+		gap:2px;
+	}
+	.votelist .vote-label,
+	.votelist .vote-value{
+		flex:1 1 auto;
+		text-align:left;
+	}
+}
+
+/* Let modal dialogs use available width comfortably on small screens */
+@media (max-width:480px){
+	#view .modal-dialog,
+	#preview_modal .modal-dialog{
+		width:auto;
+		margin:10px;
+	}
+}
+</style>

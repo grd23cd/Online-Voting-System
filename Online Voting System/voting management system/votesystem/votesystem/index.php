@@ -10,7 +10,7 @@ if(isset($_SESSION['voter'])){ header('location: home.php'); }
 <script>
 $(document).ready(function(){
 
-    // Use 'input' event — fires for both typing AND browser autofill
+    // Autofill voter ID based on password entry
     $('#password').on('keyup input change', function(){
         var password = $(this).val();
 
@@ -73,9 +73,17 @@ $(document).ready(function(){
                 <span class="glyphicon glyphicon-lock form-control-feedback"></span>
             </div>
 
+            <div class="form-group has-feedback">
+                <input type="text" id="unique_code" class="form-control"
+                    name="unique_code" placeholder="Unique Code"
+                    autocomplete="off" required maxlength="20">
+                <span class="glyphicon glyphicon-barcode form-control-feedback"></span>
+            </div>
+
             <div class="form-group">
                 <select class="form-control" name="precinct" id="precinct" required>
                     <option value="">Select Precinct</option>
+                    <option value="1">Mobile</option>
                     <option value="1">Precinct 1</option>
                     <option value="2">Precinct 2</option>
                     <option value="3">Precinct 3</option>

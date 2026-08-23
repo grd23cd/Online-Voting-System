@@ -71,6 +71,7 @@
 
 
 <!-- Edit -->
+<!-- Edit -->
 <div class="modal fade" id="edit">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -111,14 +112,29 @@
                     </div>
 
                     <div class="form-group">
-                        <label class="col-sm-3 control-label">Password</label>
+                        <label class="col-sm-3 control-label">Current Password</label>
 
                         <div class="col-sm-9">
-                            <input type="text"
+                            <input type="password"
+                                   class="form-control"
+                                   id="edit_current_password"
+                                   name="current_password"
+                                   autocomplete="off"
+                                   required>
+                            <p class="help-block">Enter the current password to confirm changes.</p>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label">New Password</label>
+
+                        <div class="col-sm-9">
+                            <input type="password"
                                    class="form-control"
                                    id="edit_password"
                                    name="password"
-                                   required>
+                                   autocomplete="new-password">
+                            <p class="help-block">Leave blank to keep the current password.</p>
                         </div>
                     </div>
 

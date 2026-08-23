@@ -1,4 +1,4 @@
-	<?php include 'includes/session.php'; ?>
+<?php include 'includes/session.php'; ?>
 	<?php include 'includes/header.php'; ?>
 	<body class="hold-transition skin-blue layout-top-nav">
 	<div class="wrapper">
@@ -68,6 +68,7 @@
 							else{
 								?>
 								<form method="POST" id="ballotForm" action="submit_ballot.php">
+									<div class="positions-grid">
 									<?php
 										include 'includes/slugify.php';
 
@@ -107,15 +108,13 @@
 												$image = (!empty($crow['photo'])) ? 'images/'.$crow['photo'] : 'images/profile.jpg';
 
 												$candidate .= '
-												<br>
 												<li class="candidate-item">
-													'.$input.'
-													<img src="'.$image.'" height="100" width="100" style="margin-left:10px;">
-													<span style="margin-left:10px;">'.$crow['firstname'].' '.$crow['lastname'].'</span>
+													<div class="candidate-input">'.$input.'</div>
+													<img class="candidate-photo" src="'.$image.'" height="100" width="100">
+													<span class="candidate-name">'.$crow['firstname'].' '.$crow['lastname'].'</span>
 
 													<button type="button" 
-														class="btn btn-primary btn-sm platform"
-														style="margin-left:10px;background:#4682B4;color:black;"
+														class="btn btn-primary btn-sm platform candidate-platform-btn"
 														data-platform="'.$crow['platform'].'"
 														data-fullname="'.$crow['firstname'].' '.$crow['lastname'].'">
 														Platform
@@ -128,24 +127,25 @@
 												: 'Select only one candidate';
 
 											echo '
-											<div class="box box-solid" style="background:#d8d1bd">
+											<div class="box box-solid position-box">
 												<div class="box-header">
 													<h3>'.$row['description'].'</h3>
 												</div>
 												<div class="box-body">
-													<p>'.$instruct.'
-														<button type="button" class="btn btn-success btn-sm reset pull-right"
+													<p class="position-instruct">'.$instruct.'
+														<button type="button" class="btn btn-success btn-sm reset"
 															data-desc="'.$slug.'">Reset</button>
 													</p>
-													<ul>'.$candidate.'</ul>
+													<ul class="candidate-list">'.$candidate.'</ul>
 												</div>
 											</div>';
 
 											$candidate = '';
 										}
 									?>
+									</div>
 
-									<div class="text-center">
+									<div class="text-center ballot-actions">
 										<button type="button" class="btn btn-success" id="preview">Preview</button>
 										<button type="submit" class="btn btn-primary" name="vote">Submit</button>
 									</div>
@@ -166,12 +166,45 @@
 	<?php include 'includes/scripts.php'; ?>
 
 	<style>
+	/* Positions layout: side-by-side on wide screens, stacked on narrow ones */
+	.positions-grid{
+		display:flex;
+		flex-wrap:wrap;
+		justify-content:center;
+		gap:20px;
+	}
+	.position-box{
+		background:#d8d1bd;
+		flex:1 1 100%;    /* always full width -> one position at a time, no side-by-side pairing */
+		width:100%;
+		min-width:0;
+		margin:0;
+	}
+	.position-instruct{
+		display:flex;
+		align-items:center;
+		justify-content:space-between;
+		flex-wrap:wrap;
+		gap:8px;
+	}
+
+	/* Candidate list */
+	.candidate-list{
+		list-style:none;
+		margin:0;
+		padding:0;
+		display:flex;
+		flex-direction:column;
+		gap:10px;
+	}
 	.candidate-item{
 		cursor:pointer;
 		padding:10px;
 		border-radius:8px;
-		margin-bottom:10px;
-		list-style: none;
+		display:flex;
+		align-items:center;
+		flex-wrap:wrap;
+		gap:10px;
 	}
 	.candidate-item:hover{
 		background:#eee;
@@ -179,6 +212,77 @@
 	.candidate-item.selected{
 		background:#cce5ff;
 		border:1px solid #007bff;
+	}
+	.candidate-input{
+		display:flex;
+		align-items:center;
+	}
+	.candidate-photo{
+		border-radius:6px;
+		object-fit:cover;
+		flex-shrink:0;
+	}
+	.candidate-name{
+		flex:1 1 120px;
+		min-width:0;
+		font-size:16px;
+		word-break:break-word;
+	}
+	.candidate-platform-btn{
+		background:#4682B4;
+		color:#000;
+		flex-shrink:0;
+	}
+
+	/* Submit / preview buttons */
+	.ballot-actions{
+		display:flex;
+		justify-content:center;
+		flex-wrap:wrap;
+		gap:10px;
+		margin-top:15px;
+	}
+
+	/* Small screens: stack everything in a centered column per candidate */
+	@media (max-width:576px){
+		.positions-grid{
+			flex-direction:column;
+			align-items:center;
+		}
+		.position-box{
+			flex:1 1 100%;
+			width:100%;
+		}
+		.candidate-item{
+			flex-direction:row;
+			flex-wrap:wrap;
+			justify-content:center;
+			align-items:center;
+			text-align:center;
+		}
+		.candidate-name,
+		.candidate-platform-btn{
+			flex-basis:100%;
+		}
+		.candidate-name{
+			order:3;
+		}
+		.candidate-platform-btn{
+			order:4;
+			margin-left:0;
+		}
+		.candidate-input{
+			justify-content:center;
+		}
+		.position-box .box-header,
+		.position-instruct{
+			text-align:center;
+			justify-content:center;
+		}
+		.candidate-photo{
+			height:80px;
+			width:80px;
+		}
 	}
 	</style>
 
